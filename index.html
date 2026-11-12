@@ -3,8 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="object-src 'none'; base-uri 'self'; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://*.firebaseapp.com;"
+    />
     <title>حقيبتي الدراسية | مدرسة الحكمة الخاصة</title>
     <!-- Tailwind CSS CDN -->
+    <script>
+      (function () {
+        var s = null;
+        try {
+          var q = new URLSearchParams(location.search).get("s");
+          if (q === "girls" || q === "boys") {
+            s = q;
+            try {
+              localStorage.setItem("hikmah_section", s);
+            } catch (e) {}
+          } else {
+            var t = localStorage.getItem("hikmah_section");
+            if (t === "girls" || t === "boys") s = t;
+          }
+        } catch (e) {}
+        window.HIKMAH_SECTION = s;
+        if (s) document.documentElement.setAttribute("data-section", s);
+        window.LSK = function (k) {
+          return k + (s === "girls" ? "_girls" : "");
+        };
+        window.chooseSection = function (x) {
+          location.href = location.pathname + "?s=" + x;
+        };
+        window.switchSection = function () {
+          try {
+            localStorage.removeItem("hikmah_section");
+          } catch (e) {}
+          location.href = location.pathname;
+        };
+      })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Firebase (قاعدة بيانات مشتركة لجميع الطلاب) -->
     <script type="module">
@@ -24,39 +60,53 @@
         signOut,
       } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyCNcFR_3-PloCNRuqFYsiLjlYxBhaTsEH0",
-        authDomain: "hikmah-platform.firebaseapp.com",
-        projectId: "hikmah-platform",
-        storageBucket: "hikmah-platform.firebasestorage.app",
-        messagingSenderId: "606933105060",
-        appId: "1:606933105060:web:4da875910b968efd0b6931",
+      // قسم البنين وقسم البنات: لكل قسم مشروع Firebase خاص به
+      const CONFIGS = {
+        boys: {
+          apiKey: "AIzaSyAQk_dPhV61fRAbw5xDViBtn3oE_y-TwLQ",
+          authDomain: "alhikma-exams.firebaseapp.com",
+          projectId: "alhikma-exams",
+          storageBucket: "alhikma-exams.firebasestorage.app",
+          messagingSenderId: "1092100395800",
+          appId: "1:1092100395800:web:1dcc96e03f364b9522846d",
+        },
+        girls: {
+          apiKey: "AIzaSyDBQUFcKFqQBdggxwrm4j-sEuDmuWAkXPI",
+          authDomain: "alhikmaexamgirl.firebaseapp.com",
+          projectId: "alhikmaexamgirl",
+          storageBucket: "alhikmaexamgirl.firebasestorage.app",
+          messagingSenderId: "236183057365",
+          appId: "1:236183057365:web:57d3131041bd94f8a4835c",
+        },
       };
 
-      // حساب المعلم (تنشئه أنت في Firebase → Authentication → Users)
+      // حساب المعلم (تنشئه أنت في Firebase → Authentication → Users لكل مشروع)
       const TEACHER_EMAIL = "teacher@hikmah.school";
 
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-      const auth = getAuth(app);
-      const col = collection(db, "resources");
+      const firebaseConfig = CONFIGS[window.HIKMAH_SECTION];
+      if (firebaseConfig) {
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const col = collection(db, "resources");
 
-      window.cloud = {
-        subscribe: (onData, onError) =>
-          onSnapshot(
-            col,
-            (snap) => onData(snap.docs.map((d) => d.data())),
-            onError,
-          ),
-        save: (res) => setDoc(doc(db, "resources", res.id), res),
-        remove: (id) => deleteDoc(doc(db, "resources", id)),
-        verify: (id) =>
-          getDocFromServer(doc(db, "resources", id)).then((d) => d.exists()),
-        login: (password) =>
-          signInWithEmailAndPassword(auth, TEACHER_EMAIL, password),
-        logout: () => signOut(auth),
-      };
-      window.dispatchEvent(new Event("cloud-ready"));
+        window.cloud = {
+          subscribe: (onData, onError) =>
+            onSnapshot(
+              col,
+              (snap) => onData(snap.docs.map((d) => d.data())),
+              onError,
+            ),
+          save: (res) => setDoc(doc(db, "resources", res.id), res),
+          remove: (id) => deleteDoc(doc(db, "resources", id)),
+          verify: (id) =>
+            getDocFromServer(doc(db, "resources", id)).then((d) => d.exists()),
+          login: (password) =>
+            signInWithEmailAndPassword(auth, TEACHER_EMAIL, password),
+          logout: () => signOut(auth),
+        };
+        window.dispatchEvent(new Event("cloud-ready"));
+      }
     </script>
 
     <!-- FontAwesome Icons -->
@@ -75,6 +125,30 @@
         theme: {
           extend: {
             colors: {
+              sky: {
+                50: "rgb(var(--sky-50) / <alpha-value>)",
+                100: "rgb(var(--sky-100) / <alpha-value>)",
+                200: "rgb(var(--sky-200) / <alpha-value>)",
+                300: "rgb(var(--sky-300) / <alpha-value>)",
+                400: "rgb(var(--sky-400) / <alpha-value>)",
+                500: "rgb(var(--sky-500) / <alpha-value>)",
+                600: "rgb(var(--sky-600) / <alpha-value>)",
+                700: "rgb(var(--sky-700) / <alpha-value>)",
+                800: "rgb(var(--sky-800) / <alpha-value>)",
+                900: "rgb(var(--sky-900) / <alpha-value>)",
+              },
+              indigo: {
+                50: "rgb(var(--indigo-50) / <alpha-value>)",
+                100: "rgb(var(--indigo-100) / <alpha-value>)",
+                200: "rgb(var(--indigo-200) / <alpha-value>)",
+                300: "rgb(var(--indigo-300) / <alpha-value>)",
+                400: "rgb(var(--indigo-400) / <alpha-value>)",
+                500: "rgb(var(--indigo-500) / <alpha-value>)",
+                600: "rgb(var(--indigo-600) / <alpha-value>)",
+                700: "rgb(var(--indigo-700) / <alpha-value>)",
+                800: "rgb(var(--indigo-800) / <alpha-value>)",
+                900: "rgb(var(--indigo-900) / <alpha-value>)",
+              },
               brand: {
                 50: "#f0f6ff",
                 100: "#e0edff",
@@ -96,9 +170,98 @@
       };
     </script>
     <style>
+      :root {
+        --sky-50: 240 249 255;
+        --sky-100: 224 242 254;
+        --sky-200: 186 230 253;
+        --sky-300: 125 211 252;
+        --sky-400: 56 189 248;
+        --sky-500: 14 165 233;
+        --sky-600: 2 132 199;
+        --sky-700: 3 105 161;
+        --sky-800: 7 89 133;
+        --sky-900: 12 74 110;
+        --indigo-50: 238 242 255;
+        --indigo-100: 224 231 255;
+        --indigo-200: 199 210 254;
+        --indigo-300: 165 180 252;
+        --indigo-400: 129 140 248;
+        --indigo-500: 99 102 241;
+        --indigo-600: 79 70 229;
+        --indigo-700: 67 56 202;
+        --indigo-800: 55 48 163;
+        --indigo-900: 49 46 129;
+        --page: #f5f8ff;
+        --b1: #dbeafe;
+        --b2: #ede9fe;
+        --b3: #cffafe;
+        --h1: #e0f2fe;
+        --h2: #ede9fe;
+        --h3: #fce7f3;
+        --g1: #0ea5e9;
+        --g2: #6366f1;
+        --gs: 99, 102, 241;
+        --hv: #7dd3fc;
+        --hs: 14, 165, 233;
+        --thbg: #f0f9ff;
+        --thfg: #0369a1;
+        --thbd: #bae6fd;
+      }
+      html[data-section="girls"] {
+        --sky-50: 253 242 248;
+        --sky-100: 252 231 243;
+        --sky-200: 251 207 232;
+        --sky-300: 249 168 212;
+        --sky-400: 244 114 182;
+        --sky-500: 236 72 153;
+        --sky-600: 219 39 119;
+        --sky-700: 190 24 93;
+        --sky-800: 157 23 77;
+        --sky-900: 131 24 67;
+        --indigo-50: 253 244 255;
+        --indigo-100: 250 232 255;
+        --indigo-200: 245 208 254;
+        --indigo-300: 240 171 252;
+        --indigo-400: 232 121 249;
+        --indigo-500: 217 70 239;
+        --indigo-600: 192 38 211;
+        --indigo-700: 162 28 175;
+        --indigo-800: 134 25 143;
+        --indigo-900: 112 26 117;
+        --page: #fff6fb;
+        --b1: #fce7f3;
+        --b2: #fae8ff;
+        --b3: #ffe4ec;
+        --h1: #fdf2f8;
+        --h2: #fae8ff;
+        --h3: #ffe4e6;
+        --g1: #ec4899;
+        --g2: #c026d3;
+        --gs: 217, 70, 239;
+        --hv: #f9a8d4;
+        --hs: 236, 72, 153;
+        --thbg: #fdf2f8;
+        --thfg: #be185d;
+        --thbd: #fbcfe8;
+      }
+      #sectionGate {
+        display: none;
+      }
+      html:not([data-section]) #sectionGate {
+        display: flex;
+      }
+      html:not([data-section]) body {
+        overflow: hidden;
+      }
+      html[data-section="girls"] .sec-boys,
+      html[data-section="boys"] .sec-girls,
+      html:not([data-section]) .sec-boys,
+      html:not([data-section]) .sec-girls {
+        display: none;
+      }
       body {
         font-family: "Cairo", sans-serif;
-        background: #f5f8ff;
+        background: var(--page);
         color: #1e293b;
         overflow-x: hidden;
       }
@@ -109,9 +272,9 @@
         z-index: -1;
         pointer-events: none;
         background:
-          radial-gradient(60% 50% at 90% 0%, #dbeafe 0%, transparent 70%),
-          radial-gradient(50% 45% at 0% 35%, #ede9fe 0%, transparent 70%),
-          radial-gradient(50% 40% at 70% 100%, #cffafe 0%, transparent 70%);
+          radial-gradient(60% 50% at 90% 0%, var(--b1) 0%, transparent 70%),
+          radial-gradient(50% 45% at 0% 35%, var(--b2) 0%, transparent 70%),
+          radial-gradient(50% 40% at 70% 100%, var(--b3) 0%, transparent 70%);
       }
       .glass-panel {
         background: rgba(255, 255, 255, 0.88);
@@ -127,8 +290,8 @@
         transition: all 0.3s ease;
       }
       .glass-card:hover {
-        border-color: #7dd3fc;
-        box-shadow: 0 18px 30px -16px rgba(14, 165, 233, 0.4);
+        border-color: var(--hv);
+        box-shadow: 0 18px 30px -16px rgba(var(--hs), 0.4);
         transform: translateY(-4px);
       }
       .neon-text-blue {
@@ -137,20 +300,20 @@
       .hero-gradient {
         background: linear-gradient(
           135deg,
-          #e0f2fe 0%,
-          #ede9fe 55%,
-          #fce7f3 100%
+          var(--h1) 0%,
+          var(--h2) 55%,
+          var(--h3) 100%
         );
       }
       .gradient-btn {
-        background: linear-gradient(135deg, #0ea5e9, #6366f1);
+        background: linear-gradient(135deg, var(--g1), var(--g2));
         color: #fff !important;
-        box-shadow: 0 6px 18px -6px rgba(99, 102, 241, 0.55);
+        box-shadow: 0 6px 18px -6px rgba(var(--gs), 0.55);
         transition: all 0.25s;
       }
       .gradient-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 22px -6px rgba(99, 102, 241, 0.7);
+        box-shadow: 0 10px 22px -6px rgba(var(--gs), 0.7);
       }
       .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
@@ -161,15 +324,15 @@
         border-radius: 9999px;
       }
       .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #0ea5e9;
+        background: var(--g1);
       }
       .sched-table th {
-        background: #f0f9ff;
-        color: #0369a1;
+        background: var(--thbg);
+        color: var(--thfg);
         font-weight: 800;
         padding: 0.75rem 1rem;
         white-space: nowrap;
-        border-bottom: 1px solid #bae6fd;
+        border-bottom: 1px solid var(--thbd);
       }
       .sched-table td {
         padding: 0.7rem 1rem;
@@ -185,6 +348,55 @@
   <body
     class="text-slate-800 antialiased min-h-screen flex flex-col selection:bg-sky-200 selection:text-slate-900"
   >
+    <!-- Section gate (boys / girls) -->
+    <div
+      id="sectionGate"
+      class="fixed inset-0 z-[100] flex-col items-center justify-center p-6 text-center overflow-y-auto"
+      style="
+        background: linear-gradient(
+          135deg,
+          #e0f2fe 0%,
+          #f5f3ff 50%,
+          #fdf2f8 100%
+        );
+      "
+    >
+      <h1 class="text-4xl sm:text-5xl font-black text-slate-900 mb-2">
+        حقيبتي الدراسية
+      </h1>
+      <p class="text-slate-500 font-semibold mb-10">
+        مدرسة الحكمة الخاصة - النعيمية • اختر القسم
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
+        <button
+          onclick="chooseSection('boys')"
+          class="group bg-white rounded-3xl p-8 border border-sky-100 shadow-xl hover:-translate-y-1 transition"
+          style="box-shadow: 0 20px 40px -20px rgba(14, 165, 233, 0.5)"
+        >
+          <div
+            class="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center text-4xl text-white mb-4 group-hover:scale-110 transition"
+            style="background: linear-gradient(135deg, #0ea5e9, #6366f1)"
+          >
+            <i class="fa-solid fa-person"></i>
+          </div>
+          <div class="text-2xl font-black text-slate-900">قسم البنين</div>
+        </button>
+        <button
+          onclick="chooseSection('girls')"
+          class="group bg-white rounded-3xl p-8 border border-pink-100 shadow-xl hover:-translate-y-1 transition"
+          style="box-shadow: 0 20px 40px -20px rgba(236, 72, 153, 0.5)"
+        >
+          <div
+            class="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center text-4xl text-white mb-4 group-hover:scale-110 transition"
+            style="background: linear-gradient(135deg, #ec4899, #c026d3)"
+          >
+            <i class="fa-solid fa-person-dress"></i>
+          </div>
+          <div class="text-2xl font-black text-slate-900">قسم البنات</div>
+        </button>
+      </div>
+    </div>
+
     <!-- Interactive Background Particle Canvas -->
 
     <!-- Header Navigation -->
@@ -210,9 +422,25 @@
                   >حقيبتي الدراسية</span
                 >
                 <span
-                  class="bg-cyan-500/10 text-sky-600 border border-cyan-500/30 text-[10px] font-black px-2 py-0.5 rounded-full"
-                  >2027/2026</span
+                  class="bg-sky-500/10 text-sky-600 border border-sky-500/30 text-[10px] font-black px-2 py-0.5 rounded-full"
+                  >2026/2025</span
                 >
+                <span
+                  class="sec-boys bg-sky-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full"
+                  >قسم البنين</span
+                ><span
+                  class="sec-girls bg-sky-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full"
+                  >قسم البنات</span
+                >
+                <button
+                  onclick="
+                    event.stopPropagation();
+                    switchSection();
+                  "
+                  class="text-[10px] font-black text-slate-500 hover:text-sky-600 border border-slate-300 hover:border-sky-400 px-2 py-0.5 rounded-full transition"
+                >
+                  <i class="fa-solid fa-repeat ml-1"></i>تبديل القسم
+                </button>
               </div>
               <p class="text-xs text-slate-500 font-semibold">
                 مدرسة الحكمة الخاصة - النعيمية
@@ -261,7 +489,7 @@
             <button
               id="viewToggleBtn"
               onclick="toggleViewMode()"
-              class="flex items-center gap-2 bg-slate-50/90 hover:bg-slate-100 text-sky-600 border border-cyan-500/30 font-bold px-4 py-2.5 rounded-xl shadow-lg transition text-sm"
+              class="flex items-center gap-2 bg-slate-50/90 hover:bg-slate-100 text-sky-600 border border-sky-500/30 font-bold px-4 py-2.5 rounded-xl shadow-lg transition text-sm"
             >
               <i class="fa-solid fa-sliders text-sky-600"></i>
               <span id="viewToggleText">لوحة المعلم</span>
@@ -278,7 +506,7 @@
     >
       <div class="glass-panel w-full max-w-sm rounded-3xl p-8 text-center">
         <div
-          class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-sky-600 text-2xl"
+          class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-600 text-2xl"
         >
           <i class="fa-solid fa-lock"></i>
         </div>
@@ -348,7 +576,7 @@
           <div class="flex items-center gap-3">
             <span
               id="modalTypeBadge"
-              class="px-3 py-1 rounded-full text-xs font-black bg-cyan-500/20 text-sky-600 border border-cyan-500/30"
+              class="px-3 py-1 rounded-full text-xs font-black bg-cyan-500/20 text-sky-600 border border-sky-500/30"
               >شرح</span
             >
             <h3 id="modalTitle" class="text-xl font-bold text-slate-900">
@@ -395,6 +623,7 @@
             id="modalExternalLink"
             href="#"
             target="_blank"
+            rel="noopener noreferrer"
             class="gradient-btn text-slate-900 font-black px-5 py-2 rounded-xl text-xs flex items-center gap-2"
           >
             <span>فتح في نافذة خارجية</span>
@@ -537,6 +766,34 @@
       const gradeName = (id) =>
         (GRADES.find((g) => g.id === Number(id)) || {}).name || "";
       const today = () => new Date().toISOString().split("T")[0];
+      const safeUrl = (u) => {
+        try {
+          const x = new URL(String(u || "").trim());
+          return x.protocol === "https:" || x.protocol === "http:"
+            ? x.href
+            : "#";
+        } catch (e) {
+          return "#";
+        }
+      };
+      const ytEmbed = (u) => {
+        try {
+          const x = new URL(String(u || "").trim());
+          const h = x.hostname.replace(/^www\./, "");
+          let id = null;
+          if (h === "youtu.be") id = x.pathname.slice(1);
+          else if (h === "youtube.com" || h === "m.youtube.com") {
+            if (x.pathname === "/watch") id = x.searchParams.get("v");
+            else if (x.pathname.startsWith("/embed/"))
+              id = x.pathname.split("/")[2];
+          }
+          return id && /^[\w-]{6,20}$/.test(id)
+            ? "https://www.youtube.com/embed/" + id
+            : null;
+        } catch (e) {
+          return null;
+        }
+      };
       const esc = (s) =>
         String(s ?? "").replace(
           /[&<>"']/g,
@@ -690,23 +947,34 @@
       function loadStateData() {
         // نسخة مخزنة للعرض السريع، ثم تُحدَّث من Firebase
         try {
-          const cached = localStorage.getItem("hikmah_cloud_cache");
+          const cached = localStorage.getItem(LSK("hikmah_cloud_cache"));
           state.resources = cached ? JSON.parse(cached) : [];
+          if (!Array.isArray(state.resources)) state.resources = [];
         } catch (e) {
           state.resources = [];
         }
 
-        const savedComp = localStorage.getItem("hikmah_completed");
-        state.completedItems = savedComp ? JSON.parse(savedComp) : [];
+        const savedComp = localStorage.getItem(LSK("hikmah_completed"));
+        try {
+          state.completedItems = savedComp ? JSON.parse(savedComp) : [];
+        } catch (e) {
+          state.completedItems = [];
+        }
+        if (!Array.isArray(state.completedItems)) state.completedItems = [];
 
-        const savedMarks = localStorage.getItem("hikmah_bookmarks");
-        state.bookmarks = savedMarks ? JSON.parse(savedMarks) : [];
+        const savedMarks = localStorage.getItem(LSK("hikmah_bookmarks"));
+        try {
+          state.bookmarks = savedMarks ? JSON.parse(savedMarks) : [];
+        } catch (e) {
+          state.bookmarks = [];
+        }
+        if (!Array.isArray(state.bookmarks)) state.bookmarks = [];
       }
 
       function saveResources() {
         try {
           localStorage.setItem(
-            "hikmah_cloud_cache",
+            LSK("hikmah_cloud_cache"),
             JSON.stringify(state.resources),
           );
         } catch (e) {}
@@ -739,11 +1007,11 @@
 
       function saveUserData() {
         localStorage.setItem(
-          "hikmah_completed",
+          LSK("hikmah_completed"),
           JSON.stringify(state.completedItems),
         );
         localStorage.setItem(
-          "hikmah_bookmarks",
+          LSK("hikmah_bookmarks"),
           JSON.stringify(state.bookmarks),
         );
         updateBookmarkBadge();
@@ -963,7 +1231,9 @@
             state.activeTab === "all" || res.type === state.activeTab;
           const matchSearch =
             !state.searchQuery ||
-            res.title.toLowerCase().includes(state.searchQuery.toLowerCase());
+            String(res.title || "")
+              .toLowerCase()
+              .includes(state.searchQuery.toLowerCase());
 
           return (
             matchGrade &&
@@ -1103,7 +1373,7 @@
           pdf: {
             label: "هيكل PDF",
             icon: "fa-file-pdf",
-            color: "bg-cyan-500/10 text-sky-600 border-cyan-500/30",
+            color: "bg-sky-500/10 text-sky-600 border-sky-500/30",
           },
           summary: {
             label: "تلخيص دراسي",
@@ -1145,28 +1415,28 @@
                                 <i class="fa-solid ${typeConfig.icon}"></i>
                                 ${typeConfig.label}
                             </span>
-                            <button onclick="toggleBookmark('${res.id}')" class="text-slate-500 hover:text-pink-500 transition">
+                            <button data-id="${esc(res.id)}" onclick="toggleBookmark(this.dataset.id)" class="text-slate-500 hover:text-pink-500 transition">
                                 <i class="${isBookmarked ? "fa-solid text-pink-500" : "fa-regular"} fa-heart text-base"></i>
                             </button>
                         </div>
                         
-                        <h3 class="font-bold text-slate-900 text-base leading-snug mb-2 group-hover:text-sky-600 transition">${res.title}</h3>
+                        <h3 class="font-bold text-slate-900 text-base leading-snug mb-2 group-hover:text-sky-600 transition">${esc(res.title)}</h3>
                         ${
                           isLive(res)
                             ? `
                             <div class="flex flex-wrap gap-2 mb-3 text-[11px] font-bold">
-                                ${res.sessionDate ? `<span class="bg-slate-50 border border-slate-300 text-slate-600 px-2.5 py-1 rounded-lg"><i class="fa-regular fa-calendar ml-1 text-indigo-600"></i>${res.sessionDate}</span>` : ""}
-                                ${res.sessionTime ? `<span class="bg-slate-50 border border-slate-300 text-slate-600 px-2.5 py-1 rounded-lg"><i class="fa-regular fa-clock ml-1 text-indigo-600"></i>${res.sessionTime}</span>` : ""}
-                                ${res.teacher ? `<span class="bg-slate-50 border border-slate-300 text-slate-600 px-2.5 py-1 rounded-lg"><i class="fa-solid fa-chalkboard-user ml-1 text-indigo-600"></i>${res.teacher}</span>` : ""}
+                                ${res.sessionDate ? `<span class="bg-slate-50 border border-slate-300 text-slate-600 px-2.5 py-1 rounded-lg"><i class="fa-regular fa-calendar ml-1 text-indigo-600"></i>${esc(res.sessionDate)}</span>` : ""}
+                                ${res.sessionTime ? `<span class="bg-slate-50 border border-slate-300 text-slate-600 px-2.5 py-1 rounded-lg"><i class="fa-regular fa-clock ml-1 text-indigo-600"></i>${esc(res.sessionTime)}</span>` : ""}
+                                ${res.teacher ? `<span class="bg-slate-50 border border-slate-300 text-slate-600 px-2.5 py-1 rounded-lg"><i class="fa-solid fa-chalkboard-user ml-1 text-indigo-600"></i>${esc(res.teacher)}</span>` : ""}
                             </div>`
                             : ""
                         }
-                        <p class="text-xs text-slate-500 leading-relaxed font-medium mb-6 line-clamp-2">${res.description || "لا يوجد وصف إضافي"}</p>
+                        <p class="text-xs text-slate-500 leading-relaxed font-medium mb-6 line-clamp-2">${esc(res.description) || "لا يوجد وصف إضافي"}</p>
                         <div class="flex flex-wrap gap-2 mb-4 text-[11px] font-bold">${res.teacher && !isLive(res) ? `<span class="bg-slate-50 border border-slate-200 text-slate-600 px-2.5 py-1 rounded-lg"><i class="fa-solid fa-chalkboard-user ml-1 text-sky-500"></i>${esc(res.teacher)}</span>` : ""}<span class="bg-sky-50 border border-sky-100 text-sky-700 px-2.5 py-1 rounded-lg">${secText(res)}</span></div>
                     </div>
 
                     <div class="pt-4 border-t border-slate-200/80 flex items-center gap-2">
-                        <button onclick="openLessonModal('${res.id}')" class="w-full bg-slate-50 hover:bg-sky-500 hover:text-white border border-slate-300 text-slate-800 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                        <button data-id="${esc(res.id)}" onclick="openLessonModal(this.dataset.id)" class="w-full bg-slate-50 hover:bg-sky-500 hover:text-white border border-slate-300 text-slate-800 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
                             <span>${isLive(res) ? "تفاصيل الحصة والانضمام" : "عرض الشرح التفاعلي"}</span>
                             <i class="fa-solid ${isLive(res) ? "fa-users-rectangle" : "fa-play"} text-[10px]"></i>
                         </button>
@@ -1185,40 +1455,40 @@
         state.activeModalResource = res;
 
         document.getElementById("modalTitle").innerText = res.title;
-        document.getElementById("modalExternalLink").href = res.url;
+        document.getElementById("modalExternalLink").href = safeUrl(res.url);
 
         const modalBody = document.getElementById("modalBody");
         if (isLive(res)) {
           modalBody.innerHTML = `
                     <div class="p-8 text-center bg-slate-50/60 rounded-2xl border border-slate-200">
                         <i class="fa-solid fa-users-rectangle text-5xl text-indigo-600 mb-4"></i>
-                        <h4 class="text-lg font-bold text-slate-900 mb-4">${res.title}</h4>
+                        <h4 class="text-lg font-bold text-slate-900 mb-4">${esc(res.title)}</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto mb-5 text-xs font-bold">
-                            <div class="bg-white border border-slate-200 rounded-xl p-3"><div class="text-slate-500 mb-1">التاريخ</div><div class="text-slate-900">${res.sessionDate || "—"}</div></div>
-                            <div class="bg-white border border-slate-200 rounded-xl p-3"><div class="text-slate-500 mb-1">الوقت</div><div class="text-slate-900">${res.sessionTime || "—"}</div></div>
-                            <div class="bg-white border border-slate-200 rounded-xl p-3"><div class="text-slate-500 mb-1">المعلم</div><div class="text-slate-900">${res.teacher || "—"}</div></div>
+                            <div class="bg-white border border-slate-200 rounded-xl p-3"><div class="text-slate-500 mb-1">التاريخ</div><div class="text-slate-900">${esc(res.sessionDate) || "—"}</div></div>
+                            <div class="bg-white border border-slate-200 rounded-xl p-3"><div class="text-slate-500 mb-1">الوقت</div><div class="text-slate-900">${esc(res.sessionTime) || "—"}</div></div>
+                            <div class="bg-white border border-slate-200 rounded-xl p-3"><div class="text-slate-500 mb-1">المعلم</div><div class="text-slate-900">${esc(res.teacher) || "—"}</div></div>
                         </div>
-                        <p class="text-xs text-slate-500 max-w-md mx-auto mb-6">${res.description || ""}</p>
-                        <a href="${res.url}" target="_blank" rel="noopener" class="gradient-btn inline-flex items-center gap-2 text-slate-900 font-black px-6 py-3 rounded-xl text-xs">
+                        <p class="text-xs text-slate-500 max-w-md mx-auto mb-6">${esc(res.description)}</p>
+                        <a href="${esc(safeUrl(res.url))}" target="_blank" rel="noopener noreferrer" class="gradient-btn inline-flex items-center gap-2 text-slate-900 font-black px-6 py-3 rounded-xl text-xs">
                             <i class="fa-solid fa-right-to-bracket"></i>
                             <span>الانضمام للحصة عبر ${res.type === "meet" ? "Google Meet" : "Microsoft Teams"}</span>
                         </a>
                     </div>
                 `;
-        } else if (res.type === "video" && res.url.includes("youtube")) {
+        } else if (res.type === "video" && ytEmbed(res.url)) {
           modalBody.innerHTML = `
                     <div class="aspect-video w-full rounded-2xl overflow-hidden border border-slate-200 bg-white">
-                        <iframe class="w-full h-full" src="${res.url}" title="Video explanation" frameborder="0" allowfullscreen></iframe>
+                        <iframe class="w-full h-full" src="${esc(ytEmbed(res.url))}" title="Video explanation" referrerpolicy="strict-origin-when-cross-origin" frameborder="0" allowfullscreen></iframe>
                     </div>
-                    <p class="text-sm text-slate-600 font-medium leading-relaxed">${res.description}</p>
+                    <p class="text-sm text-slate-600 font-medium leading-relaxed">${esc(res.description)}</p>
                 `;
         } else {
           modalBody.innerHTML = `
                     <div class="p-8 text-center bg-slate-50/60 rounded-2xl border border-slate-200">
                         <i class="fa-solid fa-file-pdf text-5xl text-sky-600 mb-4"></i>
-                        <h4 class="text-lg font-bold text-slate-900 mb-2">${res.title}</h4>
-                        <p class="text-xs text-slate-500 max-w-md mx-auto mb-6">${res.description}</p>
-                        <a href="${res.url}" target="_blank" class="gradient-btn inline-flex items-center gap-2 text-slate-900 font-black px-6 py-3 rounded-xl text-xs">
+                        <h4 class="text-lg font-bold text-slate-900 mb-2">${esc(res.title)}</h4>
+                        <p class="text-xs text-slate-500 max-w-md mx-auto mb-6">${esc(res.description)}</p>
+                        <a href="${esc(safeUrl(res.url))}" target="_blank" rel="noopener noreferrer" class="gradient-btn inline-flex items-center gap-2 text-slate-900 font-black px-6 py-3 rounded-xl text-xs">
                             <i class="fa-solid fa-download"></i>
                             <span>تنزيل واستعراض المستند كامل</span>
                         </a>
@@ -1411,11 +1681,11 @@
                                   .map(
                                     (res) => `
                                     <tr>
-                                        <td class="py-3.5 text-slate-900 font-bold">${res.title}</td>
+                                        <td class="py-3.5 text-slate-900 font-bold">${esc(res.title)}</td>
                                         <td class="py-3.5 text-slate-500">الصف ${res.gradeId} (${res.track === "advanced" ? "متقدم" : "عام"}) • ${secText(res)}${res.teacher ? " • " + esc(res.teacher) : ""}</td>
-                                        <td class="py-3.5 text-slate-500">${res.subjectId}</td>
+                                        <td class="py-3.5 text-slate-500">${esc(res.subjectId)}</td>
                                         <td class="py-3.5 text-center">
-                                            <button onclick="deleteResource('${res.id}')" class="text-rose-600 hover:text-rose-600 p-2 rounded-lg bg-rose-500/10 transition">
+                                            <button data-id="${esc(res.id)}" onclick="deleteResource(this.dataset.id)" class="text-rose-600 hover:text-rose-600 p-2 rounded-lg bg-rose-500/10 transition">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </td>
@@ -1665,7 +1935,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <div class="flex items-center gap-2"><h3 class="font-black text-slate-900">${esc(s.title)}</h3>
                         ${s.track && s.track !== "all" ? `<span class="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">المسار ${trackLabel(s.track)}</span>` : ""}</div>
-                    ${s.fileUrl ? `<a href="${esc(s.fileUrl)}" target="_blank" rel="noopener" class="gradient-btn text-xs font-black px-4 py-2 rounded-xl"><i class="fa-solid fa-download ml-1"></i>تحميل الملف</a>` : ""}
+                    ${s.fileUrl ? `<a href="${esc(safeUrl(s.fileUrl))}" target="_blank" rel="noopener" class="gradient-btn text-xs font-black px-4 py-2 rounded-xl"><i class="fa-solid fa-download ml-1"></i>تحميل الملف</a>` : ""}
                 </div>
                 <div class="overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200">
                     <table class="sched-table w-full text-right text-xs"><thead><tr>${head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead>
@@ -1757,8 +2027,8 @@
                         <div><div class="text-[11px] font-bold text-slate-400">معلم ${esc(s.name)}</div><h3 class="font-black text-slate-900 text-lg">${esc(h.teacherName)}</h3></div>
                     </div>
                     <div class="grid grid-cols-2 gap-3 text-xs font-black">
-                        ${h.phone ? `<a href="tel:${esc(h.phone)}" class="gradient-btn rounded-xl py-3 text-center"><i class="fa-solid fa-phone ml-1"></i><span dir="ltr">${esc(h.phone)}</span></a>` : ""}
-                        ${h.whatsapp ? `<a href="${waLink(h.whatsapp)}" target="_blank" rel="noopener" class="bg-[#25D366] hover:bg-[#1ebe5b] text-white rounded-xl py-3 text-center transition"><i class="fa-brands fa-whatsapp ml-1"></i>واتساب</a>` : ""}
+                        ${h.phone ? `<a href="tel:${esc(String(h.phone).replace(/[^\d+]/g, ""))}" class="gradient-btn rounded-xl py-3 text-center"><i class="fa-solid fa-phone ml-1"></i><span dir="ltr">${esc(h.phone)}</span></a>` : ""}
+                        ${h.whatsapp ? `<a href="${esc(waLink(h.whatsapp))}" target="_blank" rel="noopener noreferrer" class="bg-[#25D366] hover:bg-[#1ebe5b] text-white rounded-xl py-3 text-center transition"><i class="fa-brands fa-whatsapp ml-1"></i>واتساب</a>` : ""}
                     </div></div>`,
           )
           .join("")}</div>`;
@@ -1771,7 +2041,7 @@
       }
       function renderKindList(kind, label) {
         const items = byKind(kind);
-        return `<div class="glass-panel rounded-3xl p-6 lg:col-span-2 overflow-auto max-h-[75vh]      custom-scrollbar self-start">
+        return `<div class="glass-panel rounded-3xl p-6 lg:col-span-2 overflow-auto max-h-[75vh] custom-scrollbar self-start">
                 <h2 class="text-lg font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200">المنشور حالياً (${items.length})</h2>
                 ${
                   items.length
@@ -1779,7 +2049,7 @@
                         .map(
                           (i) => `
                     <tr><td class="py-3 text-slate-900 font-bold">${label(i)}</td>
-                    <td class="py-3 text-center w-16"><button onclick="deleteResource('${i.id}')" class="text-rose-600 hover:text-rose-700 p-2 rounded-lg bg-rose-50 transition"><i class="fa-solid fa-trash-can"></i></button></td></tr>`,
+                    <td class="py-3 text-center w-16"><button data-id="${esc(i.id)}" onclick="deleteResource(this.dataset.id)" class="text-rose-600 hover:text-rose-700 p-2 rounded-lg bg-rose-50 transition"><i class="fa-solid fa-trash-can"></i></button></td></tr>`,
                         )
                         .join("")}</tbody></table>`
                     : '<p class="text-xs text-slate-400 font-semibold">لا يوجد شيء بعد</p>'
@@ -1849,7 +2119,7 @@
                 <div><label class="${LB}">رقم الاتصال</label><input id="hPhone" type="tel" dir="ltr" class="${FI}" placeholder="05xxxxxxxx"></div>
                 <div><label class="${LB}">رقم الواتساب</label><input id="hWa" type="tel" dir="ltr" class="${FI}" placeholder="05xxxxxxxx"></div>`;
         return `<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">${formCard("إضافة رقم معلم", "fa-phone-volume", "hotForm", "handleAddHotline", f, "حفظ")}
-                ${renderKindList("hotline", (h) => `${gradeName(h.gradeId)} • ${esc((SUBJECTS.find((s) => s.id === h.subjectId) || {}).name)} • ${h.section === "all" ? "كل الشعب" : "شعبة " + h.section} • ${esc(h.teacherName)}`)}</div>`;
+                ${renderKindList("hotline", (h) => `${gradeName(h.gradeId)} • ${esc((SUBJECTS.find((s) => s.id === h.subjectId) || {}).name)} • ${h.section === "all" ? "كل الشعب" : "شعبة " + esc(h.section)} • ${esc(h.teacherName)}`)}</div>`;
       }
       async function saveItem(item, okMsg, form) {
         try {
