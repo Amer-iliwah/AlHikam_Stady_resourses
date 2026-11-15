@@ -2442,7 +2442,7 @@
         state.adminTab = t;
         render();
       }
-      function renderKindList(kind, label) {
+      function renderKindList(kind, label, editFn) {
         const items = byKind(kind);
         return `<div class="glass-panel rounded-3xl p-4 sm:p-6 lg:col-span-2 min-w-0 overflow-y-auto overscroll-contain max-h-[70vh] lg:max-h-[75vh] custom-scrollbar self-start">
                 <h2 class="text-lg font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200">المنشور حالياً (${items.length})</h2>
@@ -2452,7 +2452,7 @@
                         .map(
                           (i) => `
                     <tr><td class="py-3 text-slate-900 font-bold">${label(i)}</td>
-                    <td class="py-3 text-center w-16"><button data-id="${esc(i.id)}" onclick="deleteResource(this.dataset.id)" class="text-rose-600 hover:text-rose-700 p-2 rounded-lg bg-rose-50 transition"><i class="fa-solid fa-trash-can"></i></button></td></tr>`,
+                    <td class="py-3 text-center w-24 whitespace-nowrap">${editFn ? `<button data-id="${esc(i.id)}" onclick="${editFn}(this.dataset.id)" class="text-sky-600 hover:text-sky-700 p-2 rounded-lg bg-sky-50 transition ml-1" title="تعديل"><i class="fa-solid fa-pen"></i></button>` : ""}<button data-id="${esc(i.id)}" onclick="deleteResource(this.dataset.id)" class="text-rose-600 hover:text-rose-700 p-2 rounded-lg bg-rose-50 transition"><i class="fa-solid fa-trash-can"></i></button></td></tr>`,
                         )
                         .join("")}</tbody></table>`
                     : '<p class="text-xs text-slate-400 font-semibold">لا يوجد شيء بعد</p>'
@@ -2486,18 +2486,51 @@
                 ${(bodies[state.adminTab] || renderResourcesAdminBody)()}`;
       }
       function renderScheduleAdmin() {
+        const E =
+          state.editSchedId && window.findItem
+            ? window.findItem(state.editSchedId)
+            : null;
+        const sel = (a, b) => (E && a === b ? "selected" : "");
         const f = `
                 <div class="grid grid-cols-2 gap-3">
-                    <div><label class="${LB}">الصف</label><select id="sGrade" class="${FI}">${gradeOpts()}</select></div>
-                    <div><label class="${LB}">المسار</label><select id="sTrack" class="${FI}"><option value="all">كل المسارات</option><option value="general">عام</option><option value="advanced">متقدم</option></select></div>
+                    <div><label class="${LB}">الصف</label><select id="sGrade" class="${FI}" ${E ? "disabled" : ""}>${GRADES.map((g) => `<option value="${g.id}" ${E && Number(E.gradeId) === g.id ? "selected" : ""}>${g.name}</option>`).join("")}</select></div>
+                    <div><label class="${LB}">المسار</label><select id="sTrack" class="${FI}"><option value="all" ${sel(E && E.track, "all")}>كل المسارات</option><option value="general" ${sel(E && E.track, "general")}>عام</option><option value="advanced" ${sel(E && E.track, "advanced")}>متقدم</option></select></div>
                 </div>
-                <div><label class="${LB}">نوع الجدول</label><select id="sType" class="${FI}"><option value="review">جدول المراجعات (الهيكل)</option><option value="exam">جدول الامتحانات</option></select></div>
-                <div><label class="${LB}">العنوان</label><input id="sTitle" class="${FI}" placeholder="مثال: جدول مراجعات الفصل الأول" required></div>
+                <div><label class="${LB}">نوع الجدول</label><select id="sType" class="${FI}"><option value="review" ${sel(E && E.stype, "review")}>جدول المراجعات (الهيكل)</option><option value="exam" ${sel(E && E.stype, "exam")}>جدول الامتحانات</option></select></div>
+                <div><label class="${LB}">العنوان</label><input id="sTitle" class="${FI}" placeholder="مثال: جدول مراجعات الفصل الأول" value="${E ? esc(E.title) : ""}" required></div>
                 <div><label class="${LB}">الجدول (اكتب مباشرة في الخانات)</label><div id="schedGrid">${renderSchedGrid()}</div></div>
-                <div><label class="${LB}">رابط ملف (اختياري)</label><input id="sFile" type="url" class="${FI}" placeholder="https://..."></div>
-                <label class="flex items-center gap-2 text-xs font-bold text-slate-600"><input id="sAnnounce" type="checkbox" checked class="w-4 h-4 accent-sky-500"> نشر إعلان تلقائي في الصفحة الرئيسية</label>`;
-        return `<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">${formCard("إضافة جدول", "fa-table", "schedForm", "handleAddSchedule", f, "نشر الجدول")}
-                ${renderKindList("schedule", (s) => `${s.stype === "exam" ? "امتحانات" : "مراجعات"} • ${gradeName(s.gradeId)} • ${esc(s.title)}`)}</div>`;
+                <div><label class="${LB}">رابط ملف (اختياري)</label><input id="sFile" type="url" class="${FI}" placeholder="https://..." value="${E ? esc(E.fileUrl || "") : ""}"></div>
+                ${E ? `<p class="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">أنت تعدّل جدولاً منشوراً. الصف لا يتغيّر عند التعديل، ولو أخطأت بالصف احذف الجدول وأضفه من جديد.</p><button type="button" onclick="cancelEditSchedule()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-black py-3 rounded-xl text-xs border border-slate-200">إلغاء التعديل</button>` : `<label class="flex items-center gap-2 text-xs font-bold text-slate-600"><input id="sAnnounce" type="checkbox" checked class="w-4 h-4 accent-sky-500"> نشر إعلان تلقائي في الصفحة الرئيسية</label>`}`;
+        return `<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">${formCard(E ? "تعديل جدول" : "إضافة جدول", "fa-table", "schedForm", "handleAddSchedule", f, E ? "حفظ التعديلات" : "نشر الجدول")}
+                ${renderKindList("schedule", (s) => `${s.stype === "exam" ? "امتحانات" : "مراجعات"} • ${gradeName(s.gradeId)} • ${esc(s.title)}`, "editSchedule")}</div>`;
+      }
+
+      function editSchedule(id) {
+        const it = window.findItem && window.findItem(id);
+        if (!it) {
+          showToast("تعذر العثور على الجدول");
+          return;
+        }
+        const lines = String(it.tableText || "")
+          .split("\n")
+          .filter((l) => l.trim())
+          .map((l) => l.split("|").map((c) => c.trim()));
+        const head = lines.shift() || ["", ""];
+        const rows = lines.map((r) => head.map((_, i) => r[i] || ""));
+        state.schedDraft = {
+          head,
+          rows: rows.length ? rows : [head.map(() => "")],
+        };
+        state.editSchedId = id;
+        state.adminTab = "schedules";
+        render();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function cancelEditSchedule() {
+        state.editSchedId = null;
+        state.schedDraft = null;
+        render();
       }
       function renderAnnouncementAdmin() {
         const f = `
@@ -2558,8 +2591,12 @@
         const now = Date.now(),
           gid = Number(val("sGrade")),
           stype = val("sType");
+        const editing =
+          state.editSchedId && window.findItem
+            ? window.findItem(state.editSchedId)
+            : null;
         const item = {
-          id: String(now),
+          id: editing ? String(editing.id) : String(now),
           kind: "schedule",
           gradeId: gid,
           track: val("sTrack"),
@@ -2567,12 +2604,18 @@
           title: val("sTitle"),
           tableText: text,
           fileUrl: val("sFile"),
-          date: today(),
+          date: editing ? editing.date : today(),
         };
-        const announce = document.getElementById("sAnnounce").checked;
-        const ok = await saveItem(item, "تم نشر الجدول", e.target);
+        const announceEl = document.getElementById("sAnnounce");
+        const announce = !editing && !!announceEl && announceEl.checked;
+        const ok = await saveItem(
+          item,
+          editing ? "تم حفظ التعديلات" : "تم نشر الجدول",
+          e.target,
+        );
         if (ok) {
           state.schedDraft = null;
+          state.editSchedId = null;
           if (announce)
             window.cloud
               .save({
