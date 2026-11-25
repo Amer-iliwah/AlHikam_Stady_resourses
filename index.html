@@ -1536,23 +1536,7 @@
                         <p class="text-base sm:text-lg text-slate-600 leading-relaxed font-medium">اختر صفك ثم شعبتك ثم المادة، وستجد الشروحات والفيديوهات والهياكل الوزارية والتلخيصات والحصص الأونلاين في مكان واحد.</p>
                     </div>
                 </div>
-                                <!-- ===== شريط مؤقت: دليل مكافحة الغش (احذف من هنا إلى "نهاية الشريط" عند الانتهاء) ===== -->
-                <style>
-                  .tk-wrap{display:flex;align-items:stretch;overflow:hidden;border-radius:1rem;border:1px solid #fde68a;background:#fffbeb;margin:-1.5rem 0 2.5rem;box-shadow:0 6px 16px -10px rgba(217,119,6,.5)}
-                  .tk-label{flex:none;display:flex;align-items:center;gap:.5rem;padding:.7rem 1rem;background:#e11d48;color:#fff;font-weight:900;font-size:.8rem;white-space:nowrap}
-                  .tk-view{flex:1;overflow:hidden;direction:rtl}
-                  .tk-track{display:inline-flex;white-space:nowrap;animation:tk-move 28s linear infinite;will-change:transform}
-                  .tk-wrap:hover .tk-track{animation-play-state:paused}
-                  .tk-item{display:inline-flex;align-items:center;gap:1rem;padding:.7rem 2rem;font-weight:800;font-size:.9rem;color:#92400e}
-                  .tk-item::after{content:"✦";color:#f59e0b}
-                  @keyframes tk-move{from{transform:translateX(0)}to{transform:translateX(50%)}}
-                  @media (prefers-reduced-motion:reduce){.tk-track{animation:none}}
-                </style>
-                <div class="tk-wrap">
-                    <div class="tk-label"><i class="fa-solid fa-triangle-exclamation"></i> تنبيه هام</div>
-                    <div class="tk-view"><div class="tk-track">${'<span class="tk-item"> تم اضافة دليل مكافحة الغش والإخلال بنظام الاختبارات الرجاء الاطلاع </span>'.repeat(8)}</div></div>
-                </div>
-                <!-- ===== نهاية الشريط ===== 
+
                 ${renderAnnouncements()}
 
                 <div class="mb-8">
